@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div id="game-board">
+        <!-- Game board will be dynamically updated -->
+    </div>
+    <p id="status"></p>
+    <button id="reset-btn">Reset Game</button>
+    <script>
+        const boardDiv = document.getElementById("game-board");
+        const statusDiv = document.getElementById("status");
+        const resetBtn = document.getElementById("reset-btn");
+
+        const renderBoard = (board) => {
+            boardDiv.innerHTML = "";
+            board.forEach((row, i) => {
+                const rowDiv = document.createElement("div");
+                rowDiv.className = "row";
+                row.forEach((cell, j) => {
+                    const cellDiv = document.createElement("div");
+                    cellDiv.className = "cell";
+                    cellDiv.textContent = cell;
+                    cellDiv.onclick = () => makeMove(i, j);
+                    rowDiv.appendChild(cellDiv);
+                });
+                boardDiv.appendChild(rowDiv);
+            });
+        };
+
+        const updateStatus = (winner, currentPlayer, isDraw) => {
+            if (winner) {
+                statusDiv.textContent = `Player ${winner} wins!`;
+            } else if (isDraw) {
+                statusDiv.textContent = "It's a draw!";
+            } else {
+                statusDiv.textContent = `Player ${currentPlayer}'s turn`;
+            }
+        };
+
+        const makeMove = (row, col) => {
+            fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ row, col }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                renderBoard(data.board);
+                updateStatus(data.winner, data.current_player, data.is_draw);
+            });
+        };
+
+        resetBtn.onclick = () => {
+            fetch("/reset", { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+                renderBoard(data.board);
+                statusDiv.textContent = "Player X's turn";
+            });
+        };
+
+        // Initialize the board
+        fetch("/reset", { method: "POST" })
+            .then((response) => response.json())
+            .then((data) => {
+                renderBoard(data.board);
+                statusDiv.textContent = "Player X's turn";
+            });
+    </script>
+</body>
+</html>
